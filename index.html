@@ -278,12 +278,18 @@ $("addForm").addEventListener("submit",async e=>{
   }catch(err){ setStatus(err.message,true); }
 });
 
-$("adminBtn").addEventListener("click",()=>{ $("pinForm").hidden=!$("pinForm").hidden; });
+$("adminBtn").addEventListener("click",()=>{
+  if(pin){ // quitter le mode organisateur
+    pin=null; $("pinInput").value=""; $("sendForm").hidden=true; $("pinForm").hidden=true;
+    $("adminBtn").textContent="Mode organisateur"; render(); return;
+  }
+  $("pinForm").hidden=!$("pinForm").hidden;
+});
 $("pinForm").addEventListener("submit",async e=>{
   e.preventDefault();
   pin=$("pinInput").value;
   const r=await api("POST","/api/admin/check").catch(()=>({ok:false}));
-  if(r.ok){ $("pinForm").hidden=true; $("sendForm").hidden=false; $("adminBtn").textContent="Mode organisateur actif : ✕ pour supprimer un prénom"; render(); refreshCount(); }
+  if(r.ok){ $("pinForm").hidden=true; $("sendForm").hidden=false; $("adminBtn").textContent="Quitter le mode organisateur"; render(); refreshCount(); }
   else { pin=null; setStatus("Code organisateur incorrect.",true); }
 });
 
