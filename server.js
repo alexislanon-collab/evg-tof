@@ -16,7 +16,9 @@ const WEEKEND_ID = /^\d{4}$/; // ex. "0403" = week-end du 3 avril
 
 const app = express();
 app.use(express.json({ limit: "20kb" }));
-app.use(express.static("public"));
+const FICHIERS = ["index.html", "sw.js", "manifest.json", "icon-192.png", "icon-512.png"];
+app.get("/", (req, res) => res.sendFile(__dirname + "/index.html"));
+app.get("/:f", (req, res, next) => FICHIERS.includes(req.params.f) ? res.sendFile(__dirname + "/" + req.params.f) : next());
 
 let participants, subscriptions;
 
