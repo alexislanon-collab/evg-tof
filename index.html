@@ -51,6 +51,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .add input,.pin input{flex:1;min-width:0;font:inherit;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
 .add button,.pin button,.ghost{font:inherit;font-weight:600;border:0;border-radius:8px;padding:6px 12px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
 .status{font-size:.85rem;color:var(--muted)}
+.lead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;background:var(--yes-soft);color:var(--fg);border-radius:10px;padding:8px 12px}
+.lead b{font-family:var(--display);font-weight:600;font-size:1rem}
+.lead .n{font-size:.85rem;font-weight:600;color:var(--yes);font-variant-numeric:tabular-nums}
+.lead .t{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--yes);flex-basis:100%}
 .status.err{color:var(--no)}
 .best{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .best ol{margin:0;padding-left:1.2em;display:grid;gap:2px}
@@ -115,6 +119,7 @@ footer{font-size:.8rem;color:var(--muted);display:grid;gap:8px}
       <input id="newName" placeholder="Pas dans la liste ? Ajoute ton prénom" maxlength="30" autocomplete="off">
       <button type="submit">Ajouter</button>
     </form>
+    <div class="lead" id="lead" hidden></div>
     <span class="status" id="status">Choisis ton prénom, puis réponds pour chaque week-end.</span>
   </section>
 
@@ -196,8 +201,15 @@ function render(){
     setStatus(cur?`Tu réponds en tant que ${cur.name}.`:"Choisis ton prénom, puis réponds pour chaque week-end.");
 
   // classement
-  const scored=WEEKENDS.map(w=>({w,yes:people.filter(p=>p.votes[w.id]==="oui").length,lv:people.filter(p=>p.conge[w.id]).length})).filter(x=>x.yes>0).sort((a,b)=>b.yes-a.yes||a.lv-b.lv).slice(0,3);
+  const scored=WEEKENDS.map(w=>({w,yes:people.filter(p=>p.votes[w.id]==="oui").length,lv:people.filter(p=>p.conge[w.id]).length})).filter(x=>x.yes>0).sort((a,b)=>b.yes-a.yes||a.lv-b.lv);
+  const allScored=scored.splice(3);
   $("best").hidden=!scored.length;
+  const lead=$("lead");
+  if(scored.length){
+    const top=scored[0], tie=[...scored,...allScored].filter(x=>x.yes===top.yes&&x.lv===top.lv).length;
+    lead.innerHTML=`<span class="t">🏆 En tête en direct${tie>1?` · ${tie} ex æquo`:""}</span><b>${top.w.d}</b><span class="n">${top.yes}/${people.length} dispo${top.lv?` · ${top.lv} congé`:""}</span>`;
+    lead.hidden=false;
+  }else lead.hidden=true;
   $("bestList").innerHTML=scored.map(x=>`<li>${x.w.d} <span class="n">· ${x.yes}/${people.length} dispo${x.lv?` · ${x.lv} congé`:""}</span></li>`).join("");
 
   let html="", lastM="";
