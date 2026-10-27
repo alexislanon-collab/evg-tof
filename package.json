@@ -1,0 +1,17 @@
+{
+  "name": "evg-tof",
+  "version": "1.0.0",
+  "description": "Site de l'EVG de Tof : sondage des dispos, puis programme et lieux",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "mongodb": "^6.21.0",
+    "web-push": "^3.6.7"
+  }
+}

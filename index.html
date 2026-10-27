@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d6b73">
+<title>EVG Tof</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="EVG Tof">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : en-tête + onglets collants, cartes de week-ends groupées par mois */
+:root{
+  --bg:#f3f6f6; --surface:#ffffff; --fg:#13282b; --muted:#5b7073; --line:#d7e2e2;
+  --accent:#0d6b73; --accent-soft:#dcefef; --on-accent:#ffffff;
+  --yes:#1f8a4c; --yes-soft:#dcf2e4; --no:#c2413b; --no-soft:#f8e1df; --none:#e6ecec;
+  --plus:#1f8a4c; --minus:#b0532a;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e1819; --surface:#152325; --fg:#e4efef; --muted:#93a9ab; --line:#26393b;
+  --accent:#5cc3c9; --accent-soft:#16383b; --on-accent:#0e1819;
+  --yes:#5fd38f; --yes-soft:#173a27; --no:#ff8a80; --no-soft:#432222; --none:#22332f;
+  --plus:#5fd38f; --minus:#f0a070; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;display:grid;gap:18px}
+header h1{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1.05;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:inherit;font-weight:600;border:0;border-radius:8px;padding:7px 14px;background:transparent;color:var(--muted);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent)}
+.tab:disabled{cursor:default;opacity:.55}
+.tab small{font-weight:500;font-size:.72rem}
+.me{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:grid;gap:8px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.lbl{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.people{display:flex;flex-wrap:wrap;gap:6px}
+.pbtn{font:inherit;font-weight:600;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;padding:6px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pbtn .x{font-weight:800;color:var(--no)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.add{display:flex;gap:6px}
+.add input,.pin input{flex:1;min-width:0;font:inherit;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.add button,.pin button,.ghost{font:inherit;font-weight:600;border:0;border-radius:8px;padding:6px 12px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.status{font-size:.85rem;color:var(--muted)}
+.status.err{color:var(--no)}
+.best{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.best ol{margin:0;padding-left:1.2em;display:grid;gap:2px}
+.best .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem}
+.month h2{font-family:var(--display);font-weight:600;font-size:1.25rem;margin:4px 0 8px}
+.list{display:grid;gap:10px}
+.wk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:8px}
+.wk.all{border-color:var(--yes);box-shadow:inset 4px 0 0 var(--yes)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.date{font-family:var(--display);font-weight:600;font-size:1.05rem}
+.count{font-size:.85rem;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted)}
+.count.ok{color:var(--yes)}
+.notes{display:grid;gap:2px;font-size:.88rem;margin:0;padding:0;list-style:none}
+.notes li{display:flex;gap:6px}
+.notes .s{font-weight:800;width:1em;flex:none;text-align:center}
+.notes .p .s{color:var(--plus)} .notes .m .s{color:var(--minus)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:.8rem;padding:2px 9px;border-radius:999px;background:var(--none);color:var(--muted)}
+.chip.y{background:var(--yes-soft);color:var(--yes);font-weight:600}
+.chip.n{background:var(--no-soft);color:var(--no);font-weight:600;text-decoration:line-through}
+.chip .tag{font-size:.7rem;font-weight:600;margin-left:4px;padding:0 5px;border-radius:999px;background:var(--accent-soft);color:var(--accent);display:inline-block}
+.vote{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.vbtn{font:inherit;font-weight:600;padding:9px;border-radius:8px;border:1.5px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.vbtn.y[aria-pressed="true"]{background:var(--yes);border-color:var(--yes);color:var(--surface)}
+.vbtn.n[aria-pressed="true"]{background:var(--no);border-color:var(--no);color:var(--surface)}
+.vbtn:disabled{opacity:.45;cursor:not-allowed}
+.leave{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:500;cursor:pointer;user-select:none}
+.leave input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.leave.off{opacity:.45;cursor:not-allowed}
+.empty{color:var(--muted);font-size:.9rem;padding:8px 0}
+footer{font-size:.8rem;color:var(--muted);display:grid;gap:8px}
+.pin{display:flex;gap:6px}
+.notif{display:grid;gap:8px;background:var(--accent-soft);border-radius:12px;padding:12px 14px}
+.notif p{margin:0;font-size:.9rem}
+.notif ol{margin:0;padding-left:1.2em;font-size:.9rem;display:grid;gap:2px}
+.notif .go{font:inherit;font-weight:600;border:0;border-radius:8px;padding:9px 14px;background:var(--accent);color:var(--on-accent);cursor:pointer;justify-self:start}
+.notif .x2{font:inherit;font-size:.8rem;border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;justify-self:start;padding:0}
+.send{display:grid;gap:6px}
+.send input,.send textarea{font:inherit;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);width:100%}
+.send textarea{min-height:70px;resize:vertical}
+.send button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:9px 14px;background:var(--accent);color:var(--on-accent);cursor:pointer;justify-self:start}
+@media (prefers-reduced-motion:no-preference){.vbtn,.pbtn{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>EVG de Tof</h1>
+    <p>Annecy · printemps 2027</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Rubriques">
+    <button class="tab" role="tab" aria-selected="true">Sondage</button>
+    <button class="tab" role="tab" aria-selected="false" disabled>Programme <small>bientôt</small></button>
+    <button class="tab" role="tab" aria-selected="false" disabled>Lieux <small>bientôt</small></button>
+  </nav>
+
+  <section class="me" aria-label="Qui répond">
+    <span class="lbl">Je suis</span>
+    <div class="people" id="people"><span class="empty">Chargement…</span></div>
+    <form class="add" id="addForm">
+      <input id="newName" placeholder="Pas dans la liste ? Ajoute ton prénom" maxlength="30" autocomplete="off">
+      <button type="submit">Ajouter</button>
+    </form>
+    <span class="status" id="status">Choisis ton prénom, puis réponds pour chaque week-end.</span>
+  </section>
+
+  <section class="notif" id="notif" hidden aria-label="Notifications"></section>
+
+  <section class="best" id="best" hidden aria-label="Meilleurs week-ends">
+    <span class="lbl">En tête pour l'instant</span>
+    <ol id="bestList"></ol>
+  </section>
+
+  <main id="months"></main>
+
+  <footer>
+    <span>Vacances de printemps 2027 : zone A (Annecy, Lyon) 10–26 avril · zone B (Normandie) 17 avril – 3 mai · zone C (Paris) 3–19 avril.</span>
+    <button class="ghost" id="adminBtn" type="button" style="justify-self:start">Mode organisateur</button>
+    <form class="pin" id="pinForm" hidden>
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="Code organisateur" autocomplete="off">
+      <button type="submit">Valider</button>
+    </form>
+    <form class="send" id="sendForm" hidden>
+      <span class="lbl">Envoyer une notification à tout le monde</span>
+      <input id="sendTitle" maxlength="60" placeholder="Titre (ex. Week-end choisi !)">
+      <textarea id="sendBody" maxlength="240" placeholder="Message"></textarea>
+      <button type="submit">Envoyer</button>
+      <span class="status" id="sendStatus"></span>
+    </form>
+  </footer>
+</div>
+
+<script>
+const WEEKENDS=[
+ {id:"0403",m:"Avril",d:"Ven 2 – Dim 4 avril",p:["Week-end après Pâques, hors vacances zones A et B"],n:["Début des vacances zone C (Paris) : un peu de monde"]},
+ {id:"0410",m:"Avril",d:"Ven 9 – Dim 11 avril",p:[],n:["Vacances zone A (Annecy) et zone C : Annecy chargé"]},
+ {id:"0417",m:"Avril",d:"Ven 16 – Dim 18 avril",p:[],n:["Vacances dans les 3 zones, dont la Normandie : garde des enfants à prévoir","Prix hébergement au plus haut"]},
+ {id:"0424",m:"Avril",d:"Ven 23 – Dim 25 avril",p:[],n:["Vacances zones A et B (Normandie)"]},
+ {id:"0501",m:"Mai",d:"Ven 30 avril – Dim 2 mai",p:["Fin des vacances zone B"],n:["1er mai un samedi : pas de jour gagné","Beaucoup de commerces fermés le samedi"]},
+ {id:"0508",m:"Mai",d:"Jeu 6 – Dim 9 mai",p:["Pont de l'Ascension : jeudi 6 férié, 4 jours en posant le vendredi 7","8 mai le samedi"],n:["Grosse affluence, prix élevés, routes chargées"]},
+ {id:"0515",m:"Mai",d:"Ven 14 – Lun 17 mai",p:["Pentecôte : lundi 17 férié, week-end de 3 jours"],n:["Lundi travaillé chez certains employeurs (journée de solidarité)"]},
+ {id:"0522",m:"Mai",d:"Ven 21 – Dim 23 mai",p:["Week-end normal hors vacances : prix plus bas, moins de monde"],n:[]},
+ {id:"0529",m:"Mai",d:"Ven 28 – Dim 30 mai",p:["Hors vacances"],n:["Fête des mères le dimanche 30"]},
+ {id:"0605",m:"Juin",d:"Ven 4 – Dim 6 juin",p:["Hors vacances, saison des activités lac et montagne ouverte"],n:["Lac encore frais pour la baignade"]},
+ {id:"0612",m:"Juin",d:"Ven 11 – Dim 13 juin",p:["Week-end normal, journées longues"],n:[]},
+ {id:"0619",m:"Juin",d:"Ven 18 – Dim 20 juin",p:["Fête de la musique le lundi 21 (veille au soir)"],n:["Fête des pères le dimanche 20"]},
+ {id:"0626",m:"Juin",d:"Ven 25 – Dim 27 juin",p:["Début d'été : lac plus chaud, tout est ouvert"],n:["Début de la haute saison touristique"]},
+];
+
+let people=[], me=null, busy=false, loaded=false, pin=null;
+try{ me=localStorage.getItem("evg-me"); }catch(e){}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function setStatus(msg,err){ const s=$("status"); s.textContent=msg; s.classList.toggle("err",!!err); }
+
+async function api(method,url,body){
+  const opt={method,headers:{"Content-Type":"application/json"}};
+  if(pin) opt.headers["x-admin-pin"]=pin;
+  if(body) opt.body=JSON.stringify(body);
+  const r=await fetch(url,opt);
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||"Erreur du serveur, réessaie.");
+  return data;
+}
+
+async function load(){
+  try{
+    people=await api("GET","/api/participants");
+    loaded=true;
+    if(me && !people.some(p=>p.id===me)) me=null;
+    render();
+  }catch(e){ if(!loaded) setStatus("Le site démarre, patiente quelques secondes…",true); setTimeout(load,4000); }
+}
+
+function render(){
+  const cur=people.find(p=>p.id===me);
+  $("people").innerHTML=people.length
+    ? people.map(p=>`<button class="pbtn" data-id="${esc(p.id)}" aria-pressed="${p.id===me}">${esc(p.name)}${pin?'<span class="x" data-del="'+esc(p.id)+'" title="Supprimer">✕</span>':""}</button>`).join("")
+    : '<span class="empty">Personne pour l\'instant. Ajoute ton prénom.</span>';
+  if(loaded && !$("status").classList.contains("err"))
+    setStatus(cur?`Tu réponds en tant que ${cur.name}.`:"Choisis ton prénom, puis réponds pour chaque week-end.");
+
+  // classement
+  const scored=WEEKENDS.map(w=>({w,yes:people.filter(p=>p.votes[w.id]==="oui").length,lv:people.filter(p=>p.conge[w.id]).length})).filter(x=>x.yes>0).sort((a,b)=>b.yes-a.yes||a.lv-b.lv).slice(0,3);
+  $("best").hidden=!scored.length;
+  $("bestList").innerHTML=scored.map(x=>`<li>${x.w.d} <span class="n">· ${x.yes}/${people.length} dispo${x.lv?` · ${x.lv} congé`:""}</span></li>`).join("");
+
+  let html="", lastM="";
+  for(const w of WEEKENDS){
+    if(w.m!==lastM){ if(lastM) html+="</div></section>"; html+=`<section class="month"><h2>${w.m} 2027</h2><div class="list">`; lastM=w.m; }
+    const yes=people.filter(p=>p.votes[w.id]==="oui"), no=people.filter(p=>p.votes[w.id]==="non"), lv=people.filter(p=>p.conge[w.id]);
+    const total=people.length, all=total>0&&yes.length===total;
+    const notes=[...w.p.map(t=>`<li class="p"><span class="s">+</span><span>${t}</span></li>`),...w.n.map(t=>`<li class="m"><span class="s">−</span><span>${t}</span></li>`)].join("");
+    const chips=people.map(p=>{const v=p.votes[w.id];return `<span class="chip ${v==="oui"?"y":v==="non"?"n":""}">${esc(p.name)}${p.conge[w.id]?'<span class="tag">congé</span>':""}</span>`}).join("");
+    const mv=cur?.votes[w.id], dis=(!cur||busy)?"disabled":"";
+    html+=`<article class="wk${all?" all":""}">
+      <div class="top"><span class="date">${w.d}</span><span class="count${all?" ok":""}">${total?`${yes.length}/${total} dispo${no.length?` · ${no.length} non`:""}${lv.length?` · ${lv.length} congé`:""}`:""}</span></div>
+      ${notes?`<ul class="notes">${notes}</ul>`:""}
+      ${chips?`<div class="chips">${chips}</div>`:""}
+      <div class="vote">
+        <button class="vbtn y" data-w="${w.id}" data-v="oui" aria-pressed="${mv==="oui"}" ${dis}>Dispo</button>
+        <button class="vbtn n" data-w="${w.id}" data-v="non" aria-pressed="${mv==="non"}" ${dis}>Pas dispo</button>
+      </div>
+      <label class="leave${dis?" off":""}"><input type="checkbox" id="lv-${w.id}" data-lw="${w.id}" ${cur?.conge[w.id]?"checked":""} ${dis}>Je dois poser une journée</label>
+    </article>`;
+  }
+  $("months").innerHTML=html+"</div></section>";
+}
+
+document.addEventListener("click",async e=>{
+  const del=e.target.closest("[data-del]");
+  if(del){
+    e.stopPropagation();
+    const p=people.find(x=>x.id===del.dataset.del);
+    if(del.dataset.confirm!=="1"){ del.dataset.confirm="1"; del.textContent="supprimer ?"; return; }
+    try{ await api("DELETE","/api/participants/"+p.id); await load(); }catch(err){ setStatus(err.message,true); }
+    return;
+  }
+  const pb=e.target.closest(".pbtn");
+  if(pb){ me=pb.dataset.id; try{localStorage.setItem("evg-me",me)}catch(_){} $("status").classList.remove("err"); render(); return; }
+  const vb=e.target.closest(".vbtn");
+  if(vb && me && !busy){
+    const cur=people.find(p=>p.id===me); if(!cur) return;
+    const w=vb.dataset.w, v=cur.votes[w]===vb.dataset.v?null:vb.dataset.v;
+    if(v) cur.votes[w]=v; else delete cur.votes[w];
+    busy=true; render();
+    try{ await api("PUT",`/api/participants/${me}/vote`,{weekend:w,value:v}); $("status").classList.remove("err"); }
+    catch(err){ setStatus(err.message,true); }
+    busy=false; await load();
+  }
+});
+
+document.addEventListener("change",async e=>{
+  const cb=e.target.closest("[data-lw]");
+  if(!cb||!me||busy) return;
+  const cur=people.find(p=>p.id===me); if(!cur) return;
+  const w=cb.dataset.lw; if(cb.checked) cur.conge[w]=true; else delete cur.conge[w];
+  busy=true; render();
+  try{ await api("PUT",`/api/participants/${me}/conge`,{weekend:w,value:cb.checked}); $("status").classList.remove("err"); }
+  catch(err){ setStatus(err.message,true); }
+  busy=false; await load();
+});
+
+$("addForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const name=$("newName").value.trim(); if(!name) return;
+  try{
+    const r=await api("POST","/api/participants",{name});
+    $("newName").value=""; me=r.id; try{localStorage.setItem("evg-me",me)}catch(_){}
+    $("status").classList.remove("err"); await load();
+  }catch(err){ setStatus(err.message,true); }
+});
+
+$("adminBtn").addEventListener("click",()=>{ $("pinForm").hidden=!$("pinForm").hidden; });
+$("pinForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  pin=$("pinInput").value;
+  const r=await api("POST","/api/admin/check").catch(()=>({ok:false}));
+  if(r.ok){ $("pinForm").hidden=true; $("sendForm").hidden=false; $("adminBtn").textContent="Mode organisateur actif : ✕ pour supprimer un prénom"; render(); refreshCount(); }
+  else { pin=null; setStatus("Code organisateur incorrect.",true); }
+});
+
+// ---------- Notifications ----------
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const pushOK="serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+let swReg=null, pushKey=null, dismissed=false;
+try{ dismissed=localStorage.getItem("evg-notif-off")==="1"; }catch(_){}
+
+function b64ToBytes(b64){ const pad="=".repeat((4-b64.length%4)%4); const raw=atob((b64+pad).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(raw,c=>c.charCodeAt(0)); }
+
+async function renderNotif(){
+  const box=$("notif");
+  if(!pushKey){ box.hidden=true; return; }
+  if(isIOS && !standalone){
+    if(dismissed){ box.hidden=true; return; }
+    box.innerHTML=`<p><b>Recevoir les notifications sur iPhone</b></p>
+      <ol><li>Appuie sur le bouton Partager (carré avec une flèche) en bas de Safari</li><li>Choisis « Sur l'écran d'accueil »</li><li>Ouvre EVG Tof depuis l'icône, puis active les notifications ici</li></ol>
+      <button class="x2" id="notifHide" type="button">Masquer</button>`;
+    box.hidden=false; return;
+  }
+  if(!pushOK){ box.hidden=true; return; }
+  const sub=swReg?await swReg.pushManager.getSubscription():null;
+  if(sub && Notification.permission==="granted"){
+    box.innerHTML=`<p>🔔 Notifications activées sur ce téléphone.</p><button class="x2" id="notifStop" type="button">Désactiver</button>`;
+  }else if(Notification.permission==="denied"){
+    box.innerHTML=`<p>Notifications bloquées. Pour les recevoir, autorise-les pour ce site dans les réglages du téléphone.</p>`;
+  }else{
+    if(dismissed){ box.hidden=true; return; }
+    box.innerHTML=`<p>Sois prévenu des infos de l'EVG (week-end choisi, programme…).</p>
+      <button class="go" id="notifOn" type="button">Activer les notifications</button>
+      <button class="x2" id="notifHide" type="button">Plus tard</button>`;
+  }
+  box.hidden=false;
+}
+
+async function enablePush(){
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){ renderNotif(); return; }
+    let sub=await swReg.pushManager.getSubscription();
+    if(!sub) sub=await swReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(pushKey)});
+    await api("POST","/api/push/subscribe",{subscription:sub.toJSON(),participantId:me||""});
+  }catch(err){ setStatus("Impossible d'activer les notifications sur ce téléphone.",true); }
+  renderNotif();
+}
+
+async function disablePush(){
+  const sub=await swReg.pushManager.getSubscription();
+  if(sub){ await api("POST","/api/push/unsubscribe",{endpoint:sub.endpoint}).catch(()=>{}); await sub.unsubscribe(); }
+  renderNotif();
+}
+
+$("notif").addEventListener("click",e=>{
+  if(e.target.id==="notifOn") enablePush();
+  if(e.target.id==="notifStop") disablePush();
+  if(e.target.id==="notifHide"){ dismissed=true; try{localStorage.setItem("evg-notif-off","1")}catch(_){} renderNotif(); }
+});
+
+async function refreshCount(){
+  try{ const r=await api("GET","/api/push/count"); $("sendStatus").textContent=`${r.count} téléphone${r.count>1?"s":""} abonné${r.count>1?"s":""}.`; }catch(_){}
+}
+
+$("sendForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const title=$("sendTitle").value.trim(), body=$("sendBody").value.trim();
+  if(!body){ $("sendStatus").textContent="Écris un message."; return; }
+  try{
+    const r=await api("POST","/api/push/send",{title,body});
+    $("sendBody").value=""; $("sendStatus").textContent=`Envoyée à ${r.sent} téléphone${r.sent>1?"s":""}.`;
+  }catch(err){ $("sendStatus").textContent=err.message; }
+});
+
+(async()=>{
+  try{
+    const r=await fetch("/api/push/key").then(x=>x.json());
+    pushKey=r.key;
+    if(pushOK && pushKey) swReg=await navigator.serviceWorker.register("/sw.js");
+  }catch(_){}
+  renderNotif();
+})();
+
+load();
+setInterval(()=>{ if(!busy && document.visibilityState==="visible") load(); },15000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") load(); });
+</script>
+</body>
+</html>
